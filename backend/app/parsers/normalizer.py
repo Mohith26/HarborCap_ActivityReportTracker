@@ -56,40 +56,77 @@ def parse_sf_range(raw: str | None) -> tuple[int | None, int | None]:
 
 
 def parse_stage(raw: str | None) -> tuple[str, int | None]:
-    """Parse deal stage string.
+    """Parse deal stage string into (stage_key, stage_numeric).
+
+    Handles new-format ("1-Inquiry", "5-LOI Negotiation"), old-format
+    ("1-Legal", "4-Inquiry"), and bare names ("Touring", "LOI", "Legal").
 
     Examples:
-        '2-LOI' -> ('2-LOI', 2)
-        '7-Dead' -> ('7-Dead', 7)
-        '5-Complete' -> ('5-Complete', 5)
-        'LOI' -> ('2-LOI', 2)
+        '1-Inquiry' -> ('1-Inquiry', 1)
+        '5-LOI Negotiation' -> ('5-LOI Negotiation', 5)
+        '2-LOI' (old) -> ('5-LOI Negotiation', 5)
+        'LOI' -> ('5-LOI Negotiation', 5)
+        'Touring' -> ('3-Touring', 3)
+        None -> ('1-Inquiry', 1)
     """
+    from app.stages import (
+        STAGES, STAGE_BY_KEY, OLD_TO_NEW_STAGE_MAP,
+        DEFAULT_STAGE_KEY, DEFAULT_STAGE_NUM,
+    )
+
     if not raw:
-        return "4-Inquiry", 4
+        return DEFAULT_STAGE_KEY, DEFAULT_STAGE_NUM
 
     raw = str(raw).strip()
 
-    # Try numeric prefix
+    # Exact match against new stage keys (case-insensitive)
+    for stage in STAGES.values():
+        if raw.lower() == stage.key.lower():
+            return stage.key, stage.numeric
+
+    # Match old-format keys and remap
+    if raw in OLD_TO_NEW_STAGE_MAP:
+        return OLD_TO_NEW_STAGE_MAP[raw]
+
+    # Try numeric prefix: "3-Touring" -> extract 3
     match = re.match(r'(\d+)\s*[-–]?\s*(.*)', raw)
     if match:
         num = int(match.group(1))
-        label = match.group(2).strip()
-        stage_str = f"{num}-{label}" if label else raw
-        return stage_str, num
+        if num in STAGES:
+            return STAGES[num].key, num
 
-    # Try matching by name
-    stage_map = {
-        "legal": ("1-Legal", 1),
-        "loi": ("2-LOI", 2),
-        "touring": ("3-Touring", 3),
-        "inquiry": ("4-Inquiry", 4),
-        "complete": ("5-Complete", 5),
-        "idle": ("6-Idle", 6),
-        "dead": ("7-Dead", 7),
+    # Fuzzy keyword matching (bare names)
+    _KEYWORD_MAP = {
+        "inquiry": (1, "1-Inquiry"),
+        "review": (2, "2-Review Info"),
+        "reviewing": (2, "2-Review Info"),
+        "sent details": (2, "2-Review Info"),
+        "tour": (3, "3-Touring"),
+        "touring": (3, "3-Touring"),
+        "proposal": (4, "4-Proposal"),
+        "rfp": (4, "4-Proposal"),
+        "loi": (5, "5-LOI Negotiation"),
+        "letter of intent": (5, "5-LOI Negotiation"),
+        "legal": (6, "6-Lease Review"),
+        "lease review": (6, "6-Lease Review"),
+        "lease draft": (6, "6-Lease Review"),
+        "complete": (7, "7-Complete"),
+        "executed": (7, "7-Complete"),
+        "signed": (7, "7-Complete"),
+        "idle": (8, "8-On Hold"),
+        "on hold": (8, "8-On Hold"),
+        "hold": (8, "8-On Hold"),
+        "paused": (8, "8-On Hold"),
+        "inactive": (8, "8-On Hold"),
+        "dead": (9, "9-Dead"),
+        "removed": (9, "9-Dead"),
+        "lost": (9, "9-Dead"),
+        "cancelled": (9, "9-Dead"),
     }
-    for key, value in stage_map.items():
-        if key in raw.lower():
-            return value
+    raw_lower = raw.lower()
+    for keyword, (num, key) in _KEYWORD_MAP.items():
+        if keyword in raw_lower:
+            return key, num
 
     return raw, None
 

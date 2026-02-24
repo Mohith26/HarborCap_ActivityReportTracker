@@ -226,12 +226,24 @@ class PdfDealParser(BaseParser):
 
         # Map section to stage
         stage_map = {
-            "Primary Deals": ("4-Inquiry", 4),
-            "Secondary Deals": ("6-Idle", 6),
-            "On Hold": ("6-Idle", 6),
-            "Removed / Dead": ("7-Dead", 7),
+            "Primary Deals": ("1-Inquiry", 1),
+            "Secondary Deals": ("8-On Hold", 8),
+            "On Hold": ("8-On Hold", 8),
+            "Removed / Dead": ("9-Dead", 9),
         }
-        stage, stage_numeric = stage_map.get(section, ("4-Inquiry", 4))
+        stage, stage_numeric = stage_map.get(section, ("1-Inquiry", 1))
+
+        # Extract probability score
+        prob_score = None
+        if probability is not None and 1 <= probability <= 5:
+            prob_score = int(probability)
+
+        # Set deal priority based on section
+        deal_priority = None
+        if section == "Primary Deals":
+            deal_priority = "Primary"
+        elif section == "Secondary Deals":
+            deal_priority = "Secondary"
 
         return {
             "stage": stage,
@@ -256,4 +268,6 @@ class PdfDealParser(BaseParser):
             "lead_contact": None,
             "building_id": None,
             "deal_section": section,
+            "probability_score": prob_score,
+            "deal_priority": deal_priority,
         }

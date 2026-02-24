@@ -106,11 +106,13 @@ class ExcelLeasingReportParser(BaseParser):
         """Find deal sections (SECTION I, II, etc.) and their row ranges."""
         sections = []
         section_patterns = [
-            (r"SECTION\s*I[:\s].*(?:ACTIVE|PROPOSAL)", "2-LOI"),
+            (r"SECTION\s*I[:\s].*(?:ACTIVE|PROPOSAL)", "4-Proposal"),
             (r"SECTION\s*II[:\s].*(?:TOUR)", "3-Touring"),
-            (r"SECTION\s*III[:\s].*(?:PROSPECT|TRACKING)", "4-Inquiry"),
-            (r"SECTION\s*IV[:\s].*(?:DEAD|COMPLETE)", "7-Dead"),
-            (r"SECTION\s*V[:\s].*(?:DEAD|INQUIR)", "7-Dead"),
+            (r"SECTION\s*III[:\s].*(?:PROSPECT|TRACKING)", "1-Inquiry"),
+            (r"SECTION\s*IV[:\s].*(?:COMPLETE)", "7-Complete"),
+            (r"SECTION\s*IV[:\s].*(?:DEAD)", "9-Dead"),
+            (r"SECTION\s*V[:\s].*(?:DEAD)", "9-Dead"),
+            (r"SECTION\s*V[:\s].*(?:INQUIR)", "1-Inquiry"),
         ]
 
         section_starts = []

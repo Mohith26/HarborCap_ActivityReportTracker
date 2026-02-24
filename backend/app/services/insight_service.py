@@ -18,7 +18,8 @@ from app.models.insight import AIInsight
 class InsightService:
     def __init__(self, db: Session):
         self.db = db
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
+        api_key = settings.OPENAI_API_KEY
+        self.client = OpenAI(api_key=api_key) if (api_key and not api_key.startswith("sk-your-")) else None
 
     def generate_property_insights(
         self, property_id: str, insight_types: list[str] | None = None
@@ -124,6 +125,9 @@ class InsightService:
         insight = AIInsight(
             property_id=prop.id,
             insight_type=insight_type,
+            scope="property",
+            severity="info",
+            is_auto_generated=False,
             title=title,
             content=content,
             data_context=data_context,
@@ -164,7 +168,7 @@ class InsightService:
     def _build_dead_deal_context(self, prop: Property, report: ActivityReport) -> dict:
         dead_deals = (
             self.db.query(Deal)
-            .filter(Deal.report_id == report.id, Deal.stage_numeric == 7)
+            .filter(Deal.report_id == report.id, Deal.stage_numeric == 9)
             .all()
         )
         return {
@@ -279,7 +283,7 @@ First snapshot deal stages: {json.dumps(context['first_deals'], indent=2)}
 Latest snapshot deal stages: {json.dumps(context['last_deals'], indent=2)}
 
 Provide:
-1. Stage-to-stage conversion rates (Inquiry→Touring, Touring→LOI, LOI→Legal, Legal→Complete)
+1. Stage-to-stage conversion rates (Inquiry→Review Info→Touring→Proposal→LOI Negotiation→Lease Review→Complete)
 2. Overall pipeline conversion rate
 3. Where the biggest drop-offs occur
 4. Recommendations for improving conversion

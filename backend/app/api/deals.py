@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
+from app.models.property import Property
 from app.models.deal import Deal
 from app.models.report import ActivityReport
-from app.schemas.deal import DealResponse, DealUpdate, PipelineSummary
+from app.schemas.deal import DealResponse, DealUpdate, PipelineSummary, PortfolioPipelineSummary
+from app.stages import ACTIVE_STAGE_NUMBERS
 
 router = APIRouter()
 
@@ -87,6 +89,52 @@ def get_pipeline(
     ]
 
 
+@router.get("/deals/portfolio-pipeline", response_model=list[PortfolioPipelineSummary])
+def get_portfolio_pipeline(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Pipeline summary per property across the entire portfolio."""
+    properties = db.query(Property).all()
+    result = []
+
+    for prop in properties:
+        latest_report = (
+            db.query(ActivityReport)
+            .filter(ActivityReport.property_id == prop.id, ActivityReport.extraction_status == "completed")
+            .order_by(ActivityReport.report_date.desc())
+            .first()
+        )
+        if not latest_report:
+            continue
+
+        stage_rows = (
+            db.query(Deal.stage, Deal.stage_numeric, func.count(Deal.id), func.sum(Deal.size_min_sf))
+            .filter(Deal.report_id == latest_report.id)
+            .group_by(Deal.stage, Deal.stage_numeric)
+            .all()
+        )
+        stage_counts = {row[0]: row[1] for row in stage_rows}
+        total_sf = sum(row[3] or 0 for row in stage_rows)
+        active_count = sum(
+            row[2] for row in stage_rows
+            if row[1] is not None and row[1] in ACTIVE_STAGE_NUMBERS
+        )
+
+        # Fix: stage_counts should map stage name to count, not stage_numeric
+        stage_counts = {row[0]: row[2] for row in stage_rows}
+
+        result.append(PortfolioPipelineSummary(
+            property_id=prop.id,
+            property_name=prop.name,
+            stage_counts=stage_counts,
+            total_active_deals=active_count,
+            total_sf_in_pipeline=total_sf or None,
+        ))
+
+    return result
+
+
 @router.get("/properties/{property_id}/deals/history/{tenant_name}", response_model=list[DealResponse])
 def get_deal_history(
     property_id: str,
@@ -96,11 +144,19 @@ def get_deal_history(
 ):
     deals = (
         db.query(Deal)
+        .options(joinedload(Deal.report))
         .filter(Deal.property_id == property_id, Deal.tenant_name.ilike(f"%{tenant_name}%"))
         .order_by(Deal.snapshot_date)
         .all()
     )
-    return [DealResponse.model_validate(d) for d in deals]
+    results = []
+    for d in deals:
+        resp = DealResponse.model_validate(d)
+        if d.report:
+            resp.report_file_name = d.report.file_name
+            resp.report_date = d.report.report_date
+        results.append(resp)
+    return results
 
 
 @router.get("/deals/{deal_id}", response_model=DealResponse)

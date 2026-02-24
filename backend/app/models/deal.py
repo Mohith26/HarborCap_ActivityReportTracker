@@ -14,9 +14,11 @@ class Deal(Base):
     property_id: Mapped[str] = mapped_column(String(36), ForeignKey("properties.id", ondelete="CASCADE"), nullable=False, index=True)
     report_id: Mapped[str] = mapped_column(String(36), ForeignKey("activity_reports.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    stage: Mapped[str] = mapped_column(String(20), nullable=False)
+    stage: Mapped[str] = mapped_column(String(30), nullable=False)
     stage_numeric: Mapped[int | None] = mapped_column(SmallInteger, index=True)
     deal_type: Mapped[str | None] = mapped_column(String(50))
+    probability_score: Mapped[int | None] = mapped_column(SmallInteger)
+    deal_priority: Mapped[str | None] = mapped_column(String(20))
 
     tenant_name: Mapped[str | None] = mapped_column(String(500), index=True)
     tenant_industry: Mapped[str | None] = mapped_column(String(500))

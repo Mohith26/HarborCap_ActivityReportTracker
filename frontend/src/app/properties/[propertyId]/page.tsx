@@ -268,7 +268,7 @@ export default function PropertyDetailPage() {
                     <p>No deals extracted yet. Upload an activity report to get started.</p>
                   </div>
                 ) : (
-                  <DealPipelineTable deals={deals} />
+                  <DealPipelineTable deals={deals} propertyId={property?.id} propertyName={property?.name} />
                 )}
               </div>
             )}

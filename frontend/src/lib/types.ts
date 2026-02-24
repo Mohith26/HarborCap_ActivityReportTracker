@@ -30,13 +30,15 @@ export interface Property {
 }
 
 export type DealStage =
-  | "1-Legal"
-  | "2-LOI"
+  | "1-Inquiry"
+  | "2-Review Info"
   | "3-Touring"
-  | "4-Inquiry"
-  | "5-Complete"
-  | "6-Idle"
-  | "7-Dead";
+  | "4-Proposal"
+  | "5-LOI Negotiation"
+  | "6-Lease Review"
+  | "7-Complete"
+  | "8-On Hold"
+  | "9-Dead";
 
 export interface Deal {
   id: string;
@@ -45,6 +47,8 @@ export interface Deal {
   stage: string;
   stage_numeric: number | null;
   deal_type: string | null;
+  probability_score: number | null;
+  deal_priority: string | null;
   tenant_name: string | null;
   tenant_industry: string | null;
   is_undisclosed: boolean;
@@ -65,6 +69,8 @@ export interface Deal {
   building_id: string | null;
   snapshot_date: string | null;
   created_at: string;
+  report_file_name: string | null;
+  report_date: string | null;
 }
 
 export interface PipelineSummary {
@@ -133,6 +139,10 @@ export interface AIInsight {
   id: string;
   property_id: string | null;
   insight_type: string;
+  scope: string;
+  severity: string | null;
+  is_auto_generated: boolean;
+  tags: string[] | null;
   title: string;
   content: string;
   model_used: string | null;
@@ -149,4 +159,12 @@ export interface PropertySummary {
     string,
     { count: number; stage_numeric: number }
   >;
+}
+
+export interface PortfolioPipelineSummary {
+  property_id: string;
+  property_name: string;
+  stage_counts: Record<string, number>;
+  total_active_deals: number;
+  total_sf_in_pipeline: number | null;
 }

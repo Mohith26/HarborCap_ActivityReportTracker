@@ -109,9 +109,11 @@ def process_report(report_id: str):
             deal = Deal(
                 property_id=report.property_id,
                 report_id=report.id,
-                stage=deal_data.get("stage", "4-Inquiry"),
+                stage=deal_data.get("stage", "1-Inquiry"),
                 stage_numeric=deal_data.get("stage_numeric"),
                 deal_type=deal_data.get("deal_type"),
+                probability_score=deal_data.get("probability_score"),
+                deal_priority=deal_data.get("deal_priority"),
                 tenant_name=deal_data.get("tenant_name"),
                 tenant_industry=deal_data.get("tenant_industry"),
                 is_undisclosed=deal_data.get("is_undisclosed", False),

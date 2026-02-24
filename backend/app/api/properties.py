@@ -9,6 +9,7 @@ from app.models.property import Property
 from app.models.report import ActivityReport
 from app.models.deal import Deal
 from app.schemas.property import PropertyCreate, PropertyUpdate, PropertyResponse, PropertyListItem
+from app.stages import ACTIVE_STAGE_NUMBERS
 
 router = APIRouter()
 
@@ -21,7 +22,7 @@ def list_properties(db: Session = Depends(get_db), current_user: User = Depends(
         report_count = db.query(func.count(ActivityReport.id)).filter(ActivityReport.property_id == prop.id).scalar()
         active_deal_count = db.query(func.count(Deal.id)).filter(
             Deal.property_id == prop.id,
-            Deal.stage_numeric.in_([1, 2, 3, 4]),
+            Deal.stage_numeric.in_(ACTIVE_STAGE_NUMBERS),
         ).scalar()
         last_report = (
             db.query(ActivityReport.report_date)

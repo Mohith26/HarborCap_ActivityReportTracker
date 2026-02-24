@@ -2,11 +2,10 @@ import uuid
 import json
 from datetime import datetime, date, timezone
 
-from sqlalchemy import String, Text, Date, DateTime, ForeignKey
+from sqlalchemy import String, Text, Date, DateTime, Boolean, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.report import JSONType
 
 
 class AIInsight(Base):
@@ -16,9 +15,14 @@ class AIInsight(Base):
     property_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("properties.id", ondelete="CASCADE"), index=True)
 
     insight_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    scope: Mapped[str] = mapped_column(String(20), default="property")  # "property" or "portfolio"
+    severity: Mapped[str | None] = mapped_column(String(20))  # "info", "warning", "critical", "positive"
+    is_auto_generated: Mapped[bool] = mapped_column(Boolean, default=False)
+    tags: Mapped[dict | None] = mapped_column(JSON)
+
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    data_context: Mapped[dict | None] = mapped_column(JSONType)
+    data_context: Mapped[dict | None] = mapped_column(JSON)
     model_used: Mapped[str | None] = mapped_column(String(100))
 
     report_ids_json: Mapped[str | None] = mapped_column(Text)

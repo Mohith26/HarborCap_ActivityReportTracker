@@ -9,6 +9,7 @@ import type {
   PropertyMetric,
   AIInsight,
   PropertySummary,
+  PortfolioPipelineSummary,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -81,6 +82,8 @@ export const dealsAPI = {
     api.get<Deal[]>(`/api/properties/${propertyId}/deals`, { params }),
   pipeline: (propertyId: string) =>
     api.get<PipelineSummary[]>(`/api/properties/${propertyId}/deals/pipeline`),
+  portfolioPipeline: () =>
+    api.get<PortfolioPipelineSummary[]>("/api/deals/portfolio-pipeline"),
   history: (propertyId: string, tenantName: string) =>
     api.get<Deal[]>(`/api/properties/${propertyId}/deals/history/${encodeURIComponent(tenantName)}`),
   get: (dealId: string) => api.get<Deal>(`/api/deals/${dealId}`),
@@ -104,8 +107,14 @@ export const insightsAPI = {
     api.post<AIInsight[]>(`/api/properties/${propertyId}/insights/generate`, {
       insight_types: insightTypes || null,
     }),
+  generatePortfolio: () =>
+    api.post<AIInsight[]>("/api/insights/portfolio/generate"),
   listForProperty: (propertyId: string) =>
     api.get<AIInsight[]>(`/api/properties/${propertyId}/insights`),
+  listPortfolio: () =>
+    api.get<AIInsight[]>("/api/insights/portfolio"),
+  listLatest: (limit: number = 10) =>
+    api.get<AIInsight[]>(`/api/insights/latest?limit=${limit}`),
   listAll: () => api.get<AIInsight[]>("/api/insights"),
 };
 

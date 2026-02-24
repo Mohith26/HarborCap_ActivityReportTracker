@@ -58,6 +58,12 @@ COLUMN_ALIASES: dict[str, list[str]] = {
     "agreed_price": [
         "Agreed to Price", "Price", "AGREED TO PRICE",
     ],
+    "probability_score": [
+        "PROB", "Prob.", "Probability", "PROBABILITY", "Score",
+    ],
+    "deal_priority": [
+        "Priority", "PRIORITY", "Deal Priority",
+    ],
 }
 
 # Availability sheet column aliases

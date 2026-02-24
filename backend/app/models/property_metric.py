@@ -3,11 +3,10 @@ import json
 from datetime import datetime, date, timezone
 from decimal import Decimal
 
-from sqlalchemy import String, Integer, Date, DateTime, Numeric, Text, ForeignKey
+from sqlalchemy import String, Integer, Date, DateTime, Numeric, Text, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.report import JSONType
 
 
 class PropertyMetric(Base):
@@ -29,7 +28,7 @@ class PropertyMetric(Base):
     proposals_sent: Mapped[int | None] = mapped_column(Integer)
 
     quoted_rate_psf: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
-    additional_metrics: Mapped[dict | None] = mapped_column(JSONType)
+    additional_metrics: Mapped[dict | None] = mapped_column(JSON)
 
     snapshot_date: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

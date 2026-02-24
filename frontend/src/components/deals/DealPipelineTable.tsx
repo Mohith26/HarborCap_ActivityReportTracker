@@ -12,17 +12,22 @@ import {
 } from "@tanstack/react-table";
 import type { Deal } from "@/lib/types";
 import DealStageBadge from "./DealStageBadge";
+import TenantHistoryTimeline from "./TenantHistoryTimeline";
 import { DEAL_STAGES } from "@/lib/constants";
 import { formatDate, formatSF, truncate } from "@/lib/utils";
+import { History } from "lucide-react";
 
 interface DealPipelineTableProps {
   deals: Deal[];
+  propertyId?: string;
+  propertyName?: string;
 }
 
-export default function DealPipelineTable({ deals }: DealPipelineTableProps) {
+export default function DealPipelineTable({ deals, propertyId, propertyName }: DealPipelineTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [stageFilter, setStageFilter] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
 
   const filteredDeals = useMemo(() => {
     if (!stageFilter) return deals;
@@ -40,14 +45,39 @@ export default function DealPipelineTable({ deals }: DealPipelineTableProps) {
       {
         accessorKey: "tenant_name",
         header: "Tenant / Industry",
-        cell: ({ row }) => (
-          <div>
-            <div className="font-medium">{row.original.tenant_name || "—"}</div>
-            {row.original.tenant_industry && (
-              <div className="text-xs text-gray-500">{row.original.tenant_industry}</div>
-            )}
-          </div>
-        ),
+        cell: ({ row }) => {
+          const name = row.original.tenant_name;
+          const canShowHistory = propertyId && name;
+          return (
+            <div>
+              <div className="flex items-center gap-1.5">
+                {canShowHistory ? (
+                  <button
+                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
+                    onClick={() => setSelectedTenant(name)}
+                    title="View deal history"
+                  >
+                    {name}
+                  </button>
+                ) : (
+                  <span className="font-medium">{name || "—"}</span>
+                )}
+                {canShowHistory && (
+                  <button
+                    className="text-gray-400 hover:text-blue-600 shrink-0"
+                    onClick={() => setSelectedTenant(name)}
+                    title="View deal history"
+                  >
+                    <History size={14} />
+                  </button>
+                )}
+              </div>
+              {row.original.tenant_industry && (
+                <div className="text-xs text-gray-500">{row.original.tenant_industry}</div>
+              )}
+            </div>
+          );
+        },
         size: 200,
       },
       {
@@ -219,6 +249,16 @@ export default function DealPipelineTable({ deals }: DealPipelineTableProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Tenant History Slide-over */}
+      {selectedTenant && propertyId && (
+        <TenantHistoryTimeline
+          propertyId={propertyId}
+          tenantName={selectedTenant}
+          propertyName={propertyName}
+          onClose={() => setSelectedTenant(null)}
+        />
+      )}
     </div>
   );
 }
