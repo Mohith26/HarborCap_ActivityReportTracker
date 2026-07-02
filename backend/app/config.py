@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
     UPLOAD_DIR: str = "uploads"
+    # Comma-separated list of allowed CORS origins (env-driven for deploy;
+    # never combine "*" with allow_credentials=True).
+    CORS_ORIGINS: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"

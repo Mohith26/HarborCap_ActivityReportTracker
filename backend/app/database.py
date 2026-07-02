@@ -3,11 +3,17 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 from app.config import settings
 
+# Some managed Postgres providers hand out "postgres://" URLs, which SQLAlchemy
+# 2.x no longer accepts. Normalise to the "postgresql://" driver scheme.
+DATABASE_URL = settings.DATABASE_URL
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
+if DATABASE_URL.startswith("sqlite"):
     connect_args["check_same_thread"] = False
 
-engine = create_engine(settings.DATABASE_URL, connect_args=connect_args)
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 # Enable WAL mode and foreign keys for SQLite
 if settings.DATABASE_URL.startswith("sqlite"):

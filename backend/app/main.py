@@ -1,13 +1,26 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, properties, reports, deals, availabilities, metrics, insights
+from app.config import settings
+from app.database import Base, engine
+from app import models  # noqa: F401 - register all models on Base.metadata
+
+# Initialise schema + upload dir on boot. There are no Alembic migrations yet,
+# so create_all is the source of truth for the (fresh) deploy database. It is
+# idempotent — only missing tables are created.
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="HarborCap Activity Report Tracker", version="1.0.0")
 
+_cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
